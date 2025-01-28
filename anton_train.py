@@ -1,3 +1,4 @@
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -12,6 +13,7 @@ titanic = sns.load_dataset("titanic")
 data = titanic[["sex", "age", "fare", "class", "sibsp", "parch", "embarked", "survived"]]
 data = data.dropna()
 
+
 # Encodage des variables catégoriques
 label_encoders = {}
 for col in ["sex", "class", "embarked"]:
@@ -19,8 +21,10 @@ for col in ["sex", "class", "embarked"]:
     data[col] = le.fit_transform(data[col])
     label_encoders[col] = le
 
-# Entraîner le modèle
-X_train, X_test, y_train, y_test = load_and_prepare_data()
+X = data.drop("survived", axis=1)
+y = data["survived"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
 model = LinearRegression()
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)

@@ -9,7 +9,7 @@ app = Flask(__name__)
 available_models = {
     "1": "models/nizar_model.pth",
     "2": "models/anton_model.pth",
-    "3": "models/model3.pth",
+    "3": "models/noufel_model.pth",
     "4": "models/model4.pth"
 }
 

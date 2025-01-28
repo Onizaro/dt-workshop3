@@ -5,7 +5,7 @@ import numpy as np
 urls = {
     "1": "https://39a2-37-169-109-180.ngrok-free.app/predict",
     "2": "https://0610-89-30-29-68.ngrok-free.app/predict",
-    "3": "http://<your_ngrok_url_3>/predict",
+    "3": "http://07b0-89-30-29-68.ngrok-free.app/predict",
     "4": "https://ae28-89-30-29-68.ngrok-free.app/predict"
 }
 

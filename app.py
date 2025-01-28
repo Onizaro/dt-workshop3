@@ -74,7 +74,7 @@ def predict():
         survived_prob = probabilities[1] * 100  # Pourcentage pour "Survécu"
 
         # Résultat final
-        prediction = "Survécu" if survived_prob > not_survived_prob else "Pas survécu"
+        prediction = "Survecu" if survived_prob > not_survived_prob else "Pas survecu"
 
         return jsonify({
             "model_id": model_id,

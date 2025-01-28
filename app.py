@@ -8,7 +8,7 @@ app = Flask(__name__)
 # Dictionnaire des modèles disponibles
 available_models = {
     "1": "models/nizar_model.pth",
-    "2": "models/model2.pth",
+    "2": "models/anton_model.pth",
     "3": "models/model3.pth",
     "4": "models/model4.pth"
 }

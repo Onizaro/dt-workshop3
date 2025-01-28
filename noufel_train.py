@@ -6,31 +6,31 @@ from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import joblib
 
-import seaborn as sns
+# Load the Titanic dataset
+from seaborn import load_dataset
+titanic = load_dataset('titanic')
 
-titanic = sns.load_dataset("titanic")
-data = titanic[["sex", "age", "fare", "class", "sibsp", "parch", "embarked", "survived"]]
-data = data.dropna()
+# Preprocess the dataset
+titanic = titanic[['survived', 'pclass', 'sex', 'age', 'sibsp', 'parch', 'fare']]
+titanic = titanic.dropna()
 
-# Encodage des variables catégoriques
-label_encoders = {}
-for col in ["sex", "class", "embarked"]:
-    le = LabelEncoder()
-    data[col] = le.fit_transform(data[col])
-    label_encoders[col] = le
+# Encode categorical features
+label_encoder = LabelEncoder()
+titanic['sex'] = label_encoder.fit_transform(titanic['sex'])
 
-
-X = data.drop("survived", axis=1)
-y = data["survived"]
+# Define features and target
+X = titanic[['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare']]
+y = titanic['survived']
 
 # Train the Decision Tree model
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 model = DecisionTreeClassifier()
 model.fit(X_train, y_train)
 
+
 # Enregistrement du modèle et des encodeurs
-joblib.dump(model, "models/noufel_model.pth")
-joblib.dump(label_encoders, "models/label_encoders.pth")
+joblib.dump(model, "models/anton_model.pth")
+joblib.dump(label_encoder, "models/label_encoders.pth")
 print("Modèle et encodeurs sauvegardés avec succès !")
 
 # Create the Flask app
@@ -51,8 +51,8 @@ def predict():
         parch = int(request.args.get('parch'))
         fare = float(request.args.get('fare'))
         
-        # Encode 'sex' using its specific encoder
-        sex_encoded = label_encoders["sex"].transform([sex])[0]
+        # Encode 'sex'
+        sex_encoded = label_encoder.transform([sex])[0]
         
         # Create input array
         input_data = np.array([[pclass, sex_encoded, age, sibsp, parch, fare]])
@@ -81,7 +81,6 @@ def predict():
         return jsonify(response)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

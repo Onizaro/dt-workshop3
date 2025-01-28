@@ -35,3 +35,25 @@ print(f"Mean Squared Error: {mse:.2f}")
 joblib.dump(model, "models/anton_model.pth")
 joblib.dump(label_encoders, "models/label_encoders.pth")
 print("Modèle et encodeurs sauvegardés avec succès !")
+
+# Créer l'API Flask
+app = Flask(__name__)
+
+@app.route('/predict', methods=['GET'])
+def predict():
+    # Récupérer les arguments depuis l'URL
+    try:
+        pclass = float(request.args.get('Pclass', 0))
+        age = float(request.args.get('Age', 0))
+        sibsp = float(request.args.get('SibSp', 0))
+        fare = float(request.args.get('Fare', 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid input parameters"}), 400
+
+    # Faire une prédiction
+    input_data = [[pclass, age, sibsp, fare]]
+    prediction = model.predict(input_data)[0]
+    return jsonify({"prediction": prediction})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

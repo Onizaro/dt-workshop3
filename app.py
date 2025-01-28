@@ -10,7 +10,7 @@ available_models = {
     "1": "models/nizar_model.pth",
     "2": "models/anton_model.pth",
     "3": "models/noufel_model.pth",
-    "4": "models/model4.pth"
+    "4": "models/sivappiryan_model.pth"
 }
 
 # Chargement des encodeurs communs

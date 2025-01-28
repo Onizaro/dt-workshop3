@@ -29,7 +29,7 @@ model.fit(X_train, y_train)
 
 
 # Enregistrement du modèle et des encodeurs
-joblib.dump(model, "models/anton_model.pth")
+joblib.dump(model, "models/noufel_model.pth")
 joblib.dump(label_encoder, "models/label_encoders.pth")
 print("Modèle et encodeurs sauvegardés avec succès !")
 
@@ -43,7 +43,7 @@ def home():
 @app.route('/predict', methods=['GET'])
 def predict():
     try:
-        # Extract query parameters
+        # Extraire les paramètres de la requête
         pclass = int(request.args.get('pclass'))
         sex = request.args.get('sex')
         age = float(request.args.get('age'))
@@ -51,17 +51,24 @@ def predict():
         parch = int(request.args.get('parch'))
         fare = float(request.args.get('fare'))
         
-        # Encode 'sex'
+        # Encoder 'sex'
         sex_encoded = label_encoder.transform([sex])[0]
         
-        # Create input array
+        # Créer le tableau d'entrée
         input_data = np.array([[pclass, sex_encoded, age, sibsp, parch, fare]])
         
-        # Make prediction
+        # Faire la prédiction
         prediction = model.predict(input_data)
         predicted_survival = "Survived" if prediction[0] == 1 else "Did not survive"
 
-        # Standardized response format
+        # Calculer les probabilités
+        probas = model.predict_proba(input_data)
+        
+        # Probabilités pour "not_survived" (0) et "survived" (1)
+        prob_not_survived = probas[0][0] * 100
+        prob_survived = probas[0][1] * 100
+
+        # Formater la réponse
         response = {
             "input": {
                 "pclass": pclass,
@@ -71,9 +78,10 @@ def predict():
                 "parch": parch,
                 "fare": fare
             },
-            "prediction": {
-                "survival": predicted_survival,
-                "survival_code": int(prediction[0])
+            "prediction": predicted_survival,  # Utiliser 'predicted_survival' au lieu de 'prediction'
+            "probabilities": {
+                "not_survived": f"{prob_not_survived:.2f}%",
+                "survived": f"{prob_survived:.2f}%"
             },
             "status": "success"
         }

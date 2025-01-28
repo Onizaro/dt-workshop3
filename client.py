@@ -11,7 +11,7 @@ urls = {
     "2": "http://<your_ngrok_url_2>/predict",
 >>>>>>> 0cd8e80 (updating url)
     "3": "http://<your_ngrok_url_3>/predict",
-    "4": " https://ae28-89-30-29-68.ngrok-free.app/predict"
+    "4": "https://ae28-89-30-29-68.ngrok-free.app/predict"
 }
 
 # Paramètres à passer à la requête

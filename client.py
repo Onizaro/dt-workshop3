@@ -4,7 +4,7 @@ import numpy as np
 # URLs des différents modèles exposés via ngrok
 urls = {
     "1": "http://127.0.0.1:5000/predict",
-    "2": "http://<your_ngrok_url_2>/predict",
+    "2": "http://127.0.0.1:5000/predict",
     "3": "http://<your_ngrok_url_3>/predict",
     "4": "http://127.0.0.1:4040/predict"
 }

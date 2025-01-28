@@ -4,6 +4,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from flask import Flask, request, jsonify
 import joblib
+from sklearn.preprocessing import LabelEncoder
+x
 
 # Charger le dataset Titanic
 def load_and_prepare_data():

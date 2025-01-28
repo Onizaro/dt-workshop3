@@ -6,14 +6,11 @@ from flask import Flask, request, jsonify
 import joblib
 from sklearn.preprocessing import LabelEncoder
 
-# Charger le dataset Titanic
-def load_and_prepare_data():
-    url = "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
-    data = pd.read_csv(url)
-    data = data[["Pclass", "Age", "SibSp", "Fare", "Survived"]].dropna()
-    X = data[["Pclass", "Age", "SibSp", "Fare"]]
-    y = data["Survived"]
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+# Chargement et prétraitement des données
+import seaborn as sns
+titanic = sns.load_dataset("titanic")
+data = titanic[["sex", "age", "fare", "class", "sibsp", "parch", "embarked", "survived"]]
+data = data.dropna()
 
 # Encodage des variables catégoriques
 label_encoders = {}

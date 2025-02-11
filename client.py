@@ -1,7 +1,7 @@
 import requests
 import numpy as np
 
-# URLs des différents modèles exposés via ngrok
+# URLs des modèles exposés via ngrok
 urls = {
     "1": "https://39a2-37-169-109-180.ngrok-free.app/predict",
     "2": "https://0610-89-30-29-68.ngrok-free.app/predict",
@@ -20,38 +20,45 @@ params = {
     "embarked": "Southampton"
 }
 
-# Liste pour stocker les prédictions
 predictions = []
+numeric_predictions = []
+errors = []
 
 # Envoyer une requête pour chaque modèle et récupérer les prédictions
 for model_id, url in urls.items():
-    params["model_id"] = model_id
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=5)  # Timeout pour éviter de bloquer
         data = response.json()
-        
-        if "prediction" in data:
-            print(f"Modèle {model_id} - Prédiction: {data['prediction']}")
-            predictions.append(data['prediction'])
-        elif "probabilities" in data:
-            print(f"Modèle {model_id} - Probabilités: {data['probabilities']}")
-            predictions.append(data['probabilities'])
+
+        if "probabilities" in data:
+            not_survived_prob = float(data["probabilities"]["not_survived"].strip('%'))
+            survived_prob = float(data["probabilities"]["survived"].strip('%'))
+            numeric_predictions.append(survived_prob)
+            predictions.append({
+                "model_id": model_id,
+                "prediction": data["prediction"],
+                "probabilities": data["probabilities"]
+            })
+            print(f"Modèle {model_id} - Prédiction: {data['prediction']} (Survécu: {survived_prob:.2f}%)")
+
         else:
-            print(f"Modèle {model_id} - Erreur: {data.get('error', 'No prediction result')}")
+            errors.append(f"Modèle {model_id} - Erreur: {data.get('error', 'No valid prediction')}")
+
     except Exception as e:
-        print(f"Erreur avec le modèle {model_id}: {str(e)}")
+        errors.append(f"Modèle {model_id} - Erreur: {str(e)}")
 
-# Calculer la moyenne des prédictions
-# Si vous avez des probabilités, vous pouvez extraire les pourcentages de survie.
-# Par exemple :
-numeric_predictions = []
-for prediction in predictions:
-    if isinstance(prediction, dict):  # Cas où on reçoit des probabilités
-        if "survived" in prediction["probabilities"]:
-            numeric_predictions.append(float(prediction["probabilities"]["survived"].strip('%')))
-    else:  # Cas où on reçoit des prédictions de type "survécu" ou "pas survécu"
-        numeric_predictions.append(1 if prediction == "Survécu" else 0)
+# Affichage des erreurs
+if errors:
+    print("\nErreurs rencontrées :")
+    for error in errors:
+        print(error)
 
-# Calcul de la moyenne des prédictions (si 1 pour survécu, 0 pour pas survécu)
-average_prediction = np.mean(numeric_predictions)
-print(f"Moyenne des prédictions: {average_prediction * 100:.2f}%")
+# Calcul de la moyenne des probabilités de survie
+if numeric_predictions:
+    average_survival = np.mean(numeric_predictions)
+    final_prediction = "Survécu" if average_survival > 50 else "Pas survécu"
+
+    print(f"\nMoyenne des probabilités de survie: {average_survival:.2f}%")
+    print(f"Prédiction finale basée sur le consensus : {final_prediction}")
+else:
+    print("\nAucune prédiction valide reçue.")

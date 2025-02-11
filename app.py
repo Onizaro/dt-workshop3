@@ -34,16 +34,52 @@ def preprocess_input(args):
     except ValueError as e:
         return {"error": str(e)}
 
+# Ajout du dictionnaire des poids des modèles
+model_weights = {model_id: 1.0 for model_id in available_models}
+
+@app.route("/predict", methods=["GET"])
+def predict():
+    """Effectue une prédiction avec un modèle spécifique."""
+    try:
+        model_id = request.args.get("model_id")
+        if model_id not in available_models:
+            return jsonify({"error": "Modèle non disponible"}), 400
+
+        input_data = preprocess_input(request.args)
+        if isinstance(input_data, dict):  # En cas d'erreur dans le prétraitement
+            return jsonify(input_data), 400
+
+        model = joblib.load(available_models[model_id])
+        probabilities = model.predict_proba(input_data)[0]
+        not_survived_prob = probabilities[0] * 100
+        survived_prob = probabilities[1] * 100
+
+        prediction = "Survecu" if survived_prob > not_survived_prob else "Pas survecu"
+
+        return jsonify({
+            "model_id": model_id,
+            "prediction": prediction,
+            "probabilities": {
+                "not_survived": f"{not_survived_prob:.2f}%",
+                "survived": f"{survived_prob:.2f}%"
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @app.route("/consensus", methods=["GET"])
 def consensus():
-    """Génère une prédiction basée sur la moyenne des 4 modèles."""
+    """Génère une prédiction basée sur la moyenne pondérée des 4 modèles."""
     try:
         input_data = preprocess_input(request.args)
         if isinstance(input_data, dict):  # En cas d'erreur dans le prétraitement
             return jsonify(input_data), 400
 
         results = []
-        total_probs = {"not_survived": 0, "survived": 0}
+        total_weight = sum(model_weights.values())
+        weighted_probs = {"not_survived": 0, "survived": 0}
 
         for model_id, model_path in available_models.items():
             model = joblib.load(model_path)
@@ -51,8 +87,9 @@ def consensus():
             not_survived_prob = probabilities[0] * 100
             survived_prob = probabilities[1] * 100
 
-            total_probs["not_survived"] += not_survived_prob
-            total_probs["survived"] += survived_prob
+            weight = model_weights[model_id]
+            weighted_probs["not_survived"] += not_survived_prob * weight
+            weighted_probs["survived"] += survived_prob * weight
 
             results.append({
                 "model_id": model_id,
@@ -60,13 +97,26 @@ def consensus():
                 "probabilities": {
                     "not_survived": f"{not_survived_prob:.2f}%",
                     "survived": f"{survived_prob:.2f}%"
-                }
+                },
+                "weight": round(weight, 2)
             })
 
-        # Moyenne des probabilités
-        avg_not_survived = total_probs["not_survived"] / len(available_models)
-        avg_survived = total_probs["survived"] / len(available_models)
+        # Moyenne pondérée des probabilités
+        avg_not_survived = weighted_probs["not_survived"] / total_weight
+        avg_survived = weighted_probs["survived"] / total_weight
         final_prediction = "Survecu" if avg_survived > avg_not_survived else "Pas survecu"
+
+        # Mise à jour des poids (slashing mechanism)
+        for model in results:
+            model_id = model["model_id"]
+            survived_prob = float(model["probabilities"]["survived"].strip('%'))
+            error = abs(survived_prob - avg_survived)
+
+            if error < 5:  # Petit écart → Augmentation légère
+                model_weights[model_id] = min(1.0, model_weights[model_id] + 0.05)
+            elif error > 15:  # Grand écart → Réduction du poids
+                model_weights[model_id] = max(0.1, model_weights[model_id] * 0.8)
+
 
         return jsonify({
             "individual_predictions": results,
@@ -76,11 +126,13 @@ def consensus():
                     "not_survived": f"{avg_not_survived:.2f}%",
                     "survived": f"{avg_survived:.2f}%"
                 }
-            }
+            },
+            "updated_weights": {mid: round(w, 2) for mid, w in model_weights.items()}
         })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 if __name__ == "__main__":
     app.run(debug=True)
